@@ -22,7 +22,7 @@ var addCmd = &cobra.Command{
 		case "openai_api_key", "key":
 			normalized = "OPENAI_API_KEY"
 		default:
-			fmt.Printf("Unknown key: %s\n", keyName)
+			cmd.Printf("Unknown key: %s\n", keyName)
 			os.Exit(1)
 		}
 		viper.Set(normalized, keyValue)
@@ -31,15 +31,15 @@ var addCmd = &cobra.Command{
 			// If file does not exist, create it
 			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 				if err := viper.SafeWriteConfigAs(configPath); err != nil {
-					fmt.Println("Failed to create config file:", err)
+					cmd.Println("Failed to create config file:", err)
 					os.Exit(1)
 				}
 			} else {
-				fmt.Println("Failed to write config:", err)
+				cmd.Println("Failed to write config:", err)
 				os.Exit(1)
 			}
 		}
-		fmt.Println("OPENAI_API_KEY saved to context.")
+		cmd.Println("OPENAI_API_KEY saved to context.")
 	},
 }
 
@@ -56,15 +56,15 @@ var keyCmd = &cobra.Command{
 			// If file does not exist, create it
 			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 				if err := viper.SafeWriteConfigAs(configPath); err != nil {
-					fmt.Println("Failed to create config file:", err)
+					cmd.Println("Failed to create config file:", err)
 					os.Exit(1)
 				}
 			} else {
-				fmt.Println("Failed to write config:", err)
+				cmd.Println("Failed to write config:", err)
 				os.Exit(1)
 			}
 		}
-		fmt.Println("OPENAI_API_KEY saved to context.")
+		cmd.Println("OPENAI_API_KEY saved to context.")
 	},
 }
 

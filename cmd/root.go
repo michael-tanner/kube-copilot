@@ -31,13 +31,13 @@ to quickly create a Cobra application.`,
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			fmt.Println("No command provided. Starting AI chat session...")
+			cmd.Println("No command provided. Starting AI chat session...")
 			// Placeholder for AI chat session logic
-			fmt.Println("AI chat session started. Type your queries below:")
+			cmd.Println("AI chat session started. Type your queries below:")
 			return
 		}
-		fmt.Printf("Unknown command or input: %s\n", args[0])
-		fmt.Println("Use 'help' to see available commands.")
+		cmd.Printf("Unknown command or input: %s\n", args[0])
+		cmd.Println("Use 'help' to see available commands.")
 	},
 }
 

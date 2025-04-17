@@ -4,8 +4,6 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -20,11 +18,11 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Welcome to kube-copilot 😎")
-		fmt.Println("Available commands:")
-		fmt.Println("  help   - Display this help message")
-		fmt.Println("  hello  - A sample command to demonstrate functionality")
-		fmt.Println("\nIf no command is provided, plain text input will start an AI chat session.")
+		cmd.Println("Welcome to kube-copilot 😎")
+		cmd.Println("Available commands:")
+		cmd.Println("  help   - Display this help message")
+		cmd.Println("  hello  - A sample command to demonstrate functionality")
+		cmd.Println("\nIf no command is provided, plain text input will start an AI chat session.")
 	},
 }
 

@@ -8,6 +8,13 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+const (
+	contextDir  = ".kube-copilot-session"
+	contextFile = "kc-context"
+	contextType = "yaml"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -49,7 +56,33 @@ func GetRootCmd() *cobra.Command {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
+	// Set up Viper for context management
+
+	// Ensure the context directory exists
+	if _, err := os.Stat(contextDir); os.IsNotExist(err) {
+		err := os.MkdirAll(contextDir, 0755)
+		if err != nil {
+			fmt.Println("Unable to create context directory:", err)
+			os.Exit(1)
+		}
+	}
+
+	viper.SetConfigName(contextFile)
+	viper.SetConfigType(contextType)
+	viper.AddConfigPath(contextDir)
+
+	// Read in config file if it exists
+	if err := viper.ReadInConfig(); err == nil {
+		fmt.Println("Using context file:", viper.ConfigFileUsed())
+	}
+
+	// Optionally set defaults for context
+	// viper.SetDefault("context", map[string]interface{}{})
+
+	// Example: bind a persistent flag to a viper key
+	// rootCmd.PersistentFlags().String("context", "", "Set context")
+	// viper.BindPFlag("context", rootCmd.PersistentFlags().Lookup("context"))
+
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
@@ -58,4 +91,42 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	// Register the add command
+	rootCmd.AddCommand(addCmd)
+}
+
+// addCmd represents the add command for setting the OpenAI key
+var addCmd = &cobra.Command{
+	Use:   "add",
+	Short: "Add configuration parameters",
+}
+
+// oaikeyCmd represents the subcommand to add an OpenAI key
+var oaikeyCmd = &cobra.Command{
+	Use:   "oaikey [key]",
+	Short: "Add or update the OpenAI API key in context",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		key := args[0]
+		viper.Set("OpenAIKey", key)
+		configPath := fmt.Sprintf("./%s/%s.%s", contextDir, contextFile, contextType)
+		if err := viper.WriteConfigAs(configPath); err != nil {
+			// If file does not exist, create it
+			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+				if err := viper.SafeWriteConfigAs(configPath); err != nil {
+					fmt.Println("Failed to create config file:", err)
+					os.Exit(1)
+				}
+			} else {
+				fmt.Println("Failed to write config:", err)
+				os.Exit(1)
+			}
+		}
+		fmt.Println("OpenAIKey saved to context.")
+	},
+}
+
+func init() {
+	addCmd.AddCommand(oaikeyCmd)
 }

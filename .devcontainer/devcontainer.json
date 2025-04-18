@@ -24,5 +24,12 @@
         }
     },
     "remoteUser": "vscode",
-    "postCreateCommand": "go install github.com/spf13/cobra-cli@latest"
+    "postCreateCommand": "go install github.com/spf13/cobra-cli@latest",
+    "mounts": [
+        "source=${env:HOME}/.kube,target=/usr/local/share/kube-localhost,type=bind"
+    ],
+    "remoteEnv": {
+        "SYNC_LOCALHOST_KUBECONFIG": "true",
+        "KUBECONFIG": "/usr/local/share/kube-localhost/config"
+    }
 }

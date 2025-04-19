@@ -19,6 +19,8 @@ var setCmd = &cobra.Command{
 Usage:
   set ns <namespace>
   set namespace <namespace>
+  set key <value>
+  set openai_api_key <value>
 `,
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -41,6 +43,22 @@ Usage:
 				}
 			}
 			cmd.Printf("Namespace set to '%s'.\n", value)
+		case "key", "openai_api_key":
+			viper.Set("OPENAI_API_KEY", value)
+			configPath := fmt.Sprintf("./%s/%s.%s", contextDir, contextFile, contextType)
+			if err := viper.WriteConfigAs(configPath); err != nil {
+				// If file does not exist, create it
+				if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+					if err := viper.SafeWriteConfigAs(configPath); err != nil {
+						cmd.Println("Failed to create config file:", err)
+						return
+					}
+				} else {
+					cmd.Println("Failed to write config:", err)
+					return
+				}
+			}
+			cmd.Println("OPENAI_API_KEY saved to context.")
 		default:
 			cmd.Printf("Unknown key: %s\n", key)
 		}

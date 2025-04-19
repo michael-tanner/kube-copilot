@@ -10,19 +10,29 @@ import (
 // helpCmd represents the help command
 var helpCmd = &cobra.Command{
 	Use:   "help",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Show help for kube-copilot commands",
+	Long: `kube-copilot: AI client for Kubernetes
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+Interact with your Kubernetes cluster using natural language or commands.
+
+Available commands:
+  help      - Show this help message
+  set       - Set configuration parameters (e.g., namespace, OpenAI key)
+  status    - Show the current kube-copilot context status
+  kubecheck - List all namespaces in the current Kubernetes cluster
+
+If no command is provided, plain text input will start an AI chat session.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("Welcome to kube-copilot 😎")
+		cmd.Println("kube-copilot: AI client for Kubernetes")
+		cmd.Println()
 		cmd.Println("Available commands:")
-		cmd.Println("  help   - Display this help message")
-		cmd.Println("  hello  - A sample command to demonstrate functionality")
-		cmd.Println("\nIf no command is provided, plain text input will start an AI chat session.")
+		cmd.Println("  help      - Show this help message")
+		cmd.Println("  set       - Set configuration parameters (e.g., namespace, OpenAI key)")
+		cmd.Println("  status    - Show the current kube-copilot context status")
+		cmd.Println("  kubecheck - List all namespaces in the current Kubernetes cluster")
+		cmd.Println()
+		cmd.Println("If no command is provided, plain text input will start an AI chat session.")
 	},
 }
 

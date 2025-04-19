@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	contextDir  = ".kube-copilot-session"
+	contextDir  = ".kubecopilot"
 	contextFile = "kc-context"
 	contextType = "yaml"
 )
@@ -27,8 +27,7 @@ examples and usage of using your application. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
+	Args: cobra.ArbitraryArgs, // Allow arbitrary arguments for catch-all
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Println("No command provided. Starting AI chat session...")
@@ -36,8 +35,8 @@ to quickly create a Cobra application.`,
 			cmd.Println("AI chat session started. Type your queries below:")
 			return
 		}
-		cmd.Printf("Unknown command or input: %s\n", args[0])
-		cmd.Println("Use 'help' to see available commands.")
+		// Forward all unknown input to the prompt command
+		promptCmd.Run(cmd, args)
 	},
 }
 
@@ -74,6 +73,6 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	// Register subcommands here
-	rootCmd.AddCommand(addCmd)
+	// rootCmd.AddCommand(addCmd)
 	// ...add other commands as needed...
 }

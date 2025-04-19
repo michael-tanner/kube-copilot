@@ -17,12 +17,12 @@ AI client for Kubernetes
 
 2. **Build the project:**
    ```sh
-   go build -o kube-copilot
+   go build -o kc
    ```
 
 3. **Run the CLI:**
    ```sh
-   ./kube-copilot
+   ./kc
    ```
 
 4. **Requirements:**

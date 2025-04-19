@@ -7,14 +7,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/michael-tanner/kube-copilot/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-)
-
-const (
-	contextDir  = ".kubecopilot"
-	contextFile = "kc-context"
-	contextType = "yaml"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -56,8 +51,8 @@ func GetRootCmd() *cobra.Command {
 
 func init() {
 	// Ensure the context directory exists
-	if _, err := os.Stat(contextDir); os.IsNotExist(err) {
-		err := os.MkdirAll(contextDir, 0755)
+	if _, err := os.Stat(config.ContextDir); os.IsNotExist(err) {
+		err := os.MkdirAll(config.ContextDir, 0755)
 		if err != nil {
 			fmt.Println("Unable to create context directory:", err)
 			os.Exit(1)
@@ -65,9 +60,7 @@ func init() {
 	}
 
 	// Central Viper config setup
-	viper.SetConfigName(contextFile)
-	viper.SetConfigType(contextType)
-	viper.AddConfigPath(contextDir)
+	config.SetupViperConfig()
 	_ = viper.ReadInConfig() // Ignore error if config does not exist
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")

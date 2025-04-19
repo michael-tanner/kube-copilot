@@ -20,7 +20,7 @@ var promptCmd = &cobra.Command{
 	Long:  "Send a prompt to the AI chat session. You can also invoke the CLI with any text and it will be treated as a prompt.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 0 {
-			prompt := strings.Join(args, " ")
+ 			prompt := strings.Join(args, " ")
 			cmd.Println("Prompt:", prompt)
 			cmd.Println("Sending prompt to AI chat session...")
 			resp, err := service.SendPrompt(prompt)
@@ -28,7 +28,7 @@ var promptCmd = &cobra.Command{
 				cmd.Println("Error sending prompt:", err)
 				return
 			}
-			cmd.Println(resp.InputPrompt)
+			cmd.Println(resp.AIResponse)
 		} else {
 			cmd.Println("Error: No prompt provided.")
 			cmd.SilenceUsage = true

@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/michael-tanner/kube-copilot/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -29,7 +30,7 @@ Usage:
 		switch key {
 		case "ns", "namespace":
 			viper.Set("namespace", value)
-			configPath := fmt.Sprintf("./%s/%s.%s", contextDir, contextFile, contextType)
+			configPath := fmt.Sprintf("./%s/%s.%s", config.ContextDir, config.ContextFile, config.ContextType)
 			if err := viper.WriteConfigAs(configPath); err != nil {
 				// If file does not exist, create it
 				if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -45,7 +46,7 @@ Usage:
 			cmd.Printf("Namespace set to '%s'.\n", value)
 		case "key", "openai_api_key":
 			viper.Set("OPENAI_API_KEY", value)
-			configPath := fmt.Sprintf("./%s/%s.%s", contextDir, contextFile, contextType)
+			configPath := fmt.Sprintf("./%s/%s.%s", config.ContextDir, config.ContextFile, config.ContextType)
 			if err := viper.WriteConfigAs(configPath); err != nil {
 				// If file does not exist, create it
 				if _, ok := err.(viper.ConfigFileNotFoundError); ok {

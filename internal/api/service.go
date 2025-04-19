@@ -13,7 +13,16 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/michael-tanner/kube-copilot/internal/config"
 )
+
+func init() {
+	// viper.SetEnvPrefix("KUBECOPILOT") // Uncomment if needed
+	viper.AutomaticEnv()
+	config.SetupViperConfig()
+	_ = viper.ReadInConfig() // ignore error if config file not found
+}
 
 // Service represents your core API service
 type Service struct {
@@ -23,7 +32,7 @@ type Service struct {
 
 // NewService creates a new API service instance
 func NewService() *Service {
-	openaiApiKey := os.Getenv("OPENAI_API_KEY")
+	openaiApiKey := viper.GetString("OPENAI_API_KEY")
 	var openaiClient *openai.Client
 	if openaiApiKey != "" {
 		openaiClient = openai.NewClient(openaiApiKey)
@@ -108,14 +117,21 @@ func (s *Service) GetKubeNamespaces() ([]string, error) {
 	return nsNames, nil
 }
 
-// SendPrompt sends a prompt to the AI and returns a PromptResponse.
-// For now, this is a stub that just echoes the input prompt.
 func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
-	trimmed := strings.TrimSpace(prompt)
-	if trimmed == "" {
+	prompt_t := strings.TrimSpace(prompt)
+	if prompt_t == "" {
 		return nil, errors.New("prompt must not be empty")
 	}
+	if s.OpenAIClient == nil {
+		return nil, errors.New("OpenAI API key is not set. Please set the OPENAI_API_KEY environment variable")
+	}
+	aiResp, err := SendOpenAIPrompt(prompt_t, s.OpenAIClient)
+	if err != nil {
+		return nil, err
+	}
+
 	return &PromptResponse{
-		InputPrompt: trimmed,
+		InputPrompt: prompt_t,
+		AIResponse:  aiResp,
 	}, nil
 }

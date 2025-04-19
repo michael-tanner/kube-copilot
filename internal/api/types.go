@@ -9,4 +9,5 @@ type Status struct {
 
 type PromptResponse struct {
 	InputPrompt string
+	AIResponse  string
 }

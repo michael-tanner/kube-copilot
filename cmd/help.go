@@ -16,10 +16,10 @@ var helpCmd = &cobra.Command{
 Interact with your Kubernetes cluster using natural language or commands.
 
 Available commands:
-  help      - Show this help message
-  set       - Set configuration parameters (e.g., namespace, OpenAI key)
-  status    - Show the current kube-copilot context status
-  kubecheck - List all namespaces in the current Kubernetes cluster
+  help        - Show this help message
+  set         - Set configuration parameters (e.g., namespace, OpenAI key)
+  status      - Show the current kube-copilot context status
+  ns          - List all namespaces in the current Kubernetes cluster (aliases: namespace, namespaces)
 
 If no command is provided, plain text input will start an AI chat session.
 `,
@@ -27,10 +27,10 @@ If no command is provided, plain text input will start an AI chat session.
 		cmd.Println("kube-copilot: AI client for Kubernetes")
 		cmd.Println()
 		cmd.Println("Available commands:")
-		cmd.Println("  help      - Show this help message")
-		cmd.Println("  set       - Set configuration parameters (e.g., namespace, OpenAI key)")
-		cmd.Println("  status    - Show the current kube-copilot context status")
-		cmd.Println("  kubecheck - List all namespaces in the current Kubernetes cluster")
+		cmd.Println("  help        - Show this help message")
+		cmd.Println("  set         - Set configuration parameters (e.g., namespace, OpenAI key)")
+		cmd.Println("  status      - Show the current kube-copilot context status")
+		cmd.Println("  ns          - List all namespaces in the current Kubernetes cluster (aliases: namespace, namespaces)")
 		cmd.Println()
 		cmd.Println("If no command is provided, plain text input will start an AI chat session.")
 	},

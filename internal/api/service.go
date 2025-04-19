@@ -2,9 +2,12 @@ package api
 
 import (
 	"context"
+	"errors"
 	"os"
 	"sort"
+	"strings"
 
+	openai "github.com/sashabaranov/go-openai"
 	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -15,11 +18,19 @@ import (
 // Service represents your core API service
 type Service struct {
 	// add dependencies here (e.g., logger, kubeClient) if needed
+	OpenAIClient *openai.Client
 }
 
 // NewService creates a new API service instance
 func NewService() *Service {
-	return &Service{}
+	openaiApiKey := os.Getenv("OPENAI_API_KEY")
+	var openaiClient *openai.Client
+	if openaiApiKey != "" {
+		openaiClient = openai.NewClient(openaiApiKey)
+	}
+	return &Service{
+		OpenAIClient: openaiClient,
+	}
 }
 
 // CheckStatus reads config/context and returns status info
@@ -95,4 +106,16 @@ func (s *Service) GetKubeNamespaces() ([]string, error) {
 		nsNames = append(nsNames, ns.Name)
 	}
 	return nsNames, nil
+}
+
+// SendPrompt sends a prompt to the AI and returns a PromptResponse.
+// For now, this is a stub that just echoes the input prompt.
+func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
+	trimmed := strings.TrimSpace(prompt)
+	if trimmed == "" {
+		return nil, errors.New("prompt must not be empty")
+	}
+	return &PromptResponse{
+		InputPrompt: trimmed,
+	}, nil
 }

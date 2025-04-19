@@ -4,8 +4,14 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"strings"
+
+	"github.com/michael-tanner/kube-copilot/internal/api"
+
 	"github.com/spf13/cobra"
 )
+
+var service = api.NewService()
 
 // promptCmd represents the prompt command
 var promptCmd = &cobra.Command{
@@ -14,23 +20,22 @@ var promptCmd = &cobra.Command{
 	Long:  "Send a prompt to the AI chat session. You can also invoke the CLI with any text and it will be treated as a prompt.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 0 {
-			cmd.Println(joinArgs(args))
+			prompt := strings.Join(args, " ")
+			cmd.Println("Prompt:", prompt)
+			cmd.Println("Sending prompt to AI chat session...")
+			resp, err := service.SendPrompt(prompt)
+			if err != nil {
+				cmd.Println("Error sending prompt:", err)
+				return
+			}
+			cmd.Println(resp.InputPrompt)
 		} else {
-			cmd.Println("")
+			cmd.Println("Error: No prompt provided.")
+			cmd.SilenceUsage = true
+			// Optionally, set a non-zero exit code:
+			// os.Exit(1)
 		}
 	},
-}
-
-// joinArgs joins the arguments with spaces.
-func joinArgs(args []string) string {
-	result := ""
-	for i, arg := range args {
-		if i > 0 {
-			result += " "
-		}
-		result += arg
-	}
-	return result
 }
 
 func init() {

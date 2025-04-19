@@ -6,3 +6,7 @@ type Status struct {
 	KubeNamespaces    []string
 	CurrentNamespace  string
 }
+
+type PromptResponse struct {
+	InputPrompt string
+}

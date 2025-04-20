@@ -1,6 +1,8 @@
 package api
 
-import openai "github.com/sashabaranov/go-openai"
+import (
+	openai "github.com/openai/openai-go"
+)
 
 // Service represents your core API service
 type Service struct {

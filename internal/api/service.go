@@ -7,7 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	openai "github.com/sashabaranov/go-openai"
+	openai "github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
 	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -26,12 +27,12 @@ func init() {
 // NewService creates a new API service instance
 func NewService() *Service {
 	openaiApiKey := viper.GetString("OPENAI_API_KEY")
-	var openaiClient *openai.Client
+	var openaiClient openai.Client
 	if openaiApiKey != "" {
-		openaiClient = openai.NewClient(openaiApiKey)
+		openaiClient = openai.NewClient(option.WithAPIKey(openaiApiKey))
 	}
 	return &Service{
-		OpenAIClient: openaiClient,
+		OpenAIClient: &openaiClient,
 	}
 }
 

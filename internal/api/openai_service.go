@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	openai "github.com/sashabaranov/go-openai"
+	openai "github.com/openai/openai-go"
 )
 
 // SendOpenAIPrompt sends a prompt to OpenAI's ChatGPT-4 and returns the response.
@@ -13,23 +13,21 @@ func SendOpenAIPrompt(prompt string, openaiClient *openai.Client) (string, error
 		return "", errors.New("OpenAI client is not initialized")
 	}
 
-	resp, err := openaiClient.CreateChatCompletion(
+	chatCompletion, err := openaiClient.Chat.Completions.New(
 		context.Background(),
-		openai.ChatCompletionRequest{
-			Model: openai.GPT4,
-			Messages: []openai.ChatCompletionMessage{
-				{
-					Role:    openai.ChatMessageRoleUser,
-					Content: prompt,
-				},
+		openai.ChatCompletionNewParams{
+			Model: openai.ChatModelGPT4,
+			Messages: []openai.ChatCompletionMessageParamUnion{
+				openai.UserMessage(prompt),
 			},
 		},
 	)
+
 	if err != nil {
 		return "", err
 	}
-	if len(resp.Choices) == 0 {
+	if len(chatCompletion.Choices) == 0 {
 		return "", errors.New("no response from OpenAI")
 	}
-	return resp.Choices[0].Message.Content, nil
+	return chatCompletion.Choices[0].Message.Content, nil
 }

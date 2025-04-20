@@ -9,7 +9,9 @@ import (
 
 // SendOpenAIPrompt sends a prompt to OpenAI's ChatGPT-4 and returns the response.
 func SendOpenAIPrompt(prompt string, openaiClient *openai.Client) (string, error) {
-	// Try to get the API key from environment if not set in config
+	if openaiClient == nil {
+		return "", errors.New("OpenAI client is not initialized")
+	}
 
 	resp, err := openaiClient.CreateChatCompletion(
 		context.Background(),

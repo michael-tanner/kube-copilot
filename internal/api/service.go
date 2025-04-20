@@ -18,16 +18,9 @@ import (
 )
 
 func init() {
-	// viper.SetEnvPrefix("KUBECOPILOT") // Uncomment if needed
 	viper.AutomaticEnv()
 	config.SetupViperConfig()
 	_ = viper.ReadInConfig() // ignore error if config file not found
-}
-
-// Service represents your core API service
-type Service struct {
-	// add dependencies here (e.g., logger, kubeClient) if needed
-	OpenAIClient *openai.Client
 }
 
 // NewService creates a new API service instance

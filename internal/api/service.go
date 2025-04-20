@@ -26,19 +26,23 @@ func init() {
 
 // NewService creates a new API service instance
 func NewService() *Service {
+	// Only retrieve the API key here
 	openaiApiKey := viper.GetString("OPENAI_API_KEY")
+	if openaiApiKey == "" {
+		openaiApiKey = os.Getenv("OPENAI_API_KEY")
+	}
 	var openaiClient openai.Client
 	if openaiApiKey != "" {
 		openaiClient = openai.NewClient(option.WithAPIKey(openaiApiKey))
 	}
 	return &Service{
 		OpenAIClient: &openaiClient,
+		OpenaiApiKey: openaiApiKey,
 	}
 }
 
 // CheckStatus reads config/context and returns status info
 func (s *Service) CheckStatus() (*Status, error) {
-	openaiKey := viper.GetString("OPENAI_API_KEY")
 	namespace := viper.GetString("namespace")
 
 	// Get namespaces and sort them
@@ -66,7 +70,7 @@ func (s *Service) CheckStatus() (*Status, error) {
 	}
 
 	status := &Status{
-		OpenaiApiKeyIsSet: openaiKey != "",
+		OpenaiApiKeyIsSet: s.OpenaiApiKey != "",
 		KubeClusterName:   clusterName,
 		KubeNamespaces:    nsList,
 		CurrentNamespace:  namespace,

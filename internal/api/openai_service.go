@@ -8,12 +8,12 @@ import (
 )
 
 // SendOpenAIPrompt sends a prompt to OpenAI's ChatGPT-4 and returns the response.
-func SendOpenAIPrompt(prompt string, openaiClient *openai.Client) (string, error) {
-	if openaiClient == nil {
+func SendOpenAIPrompt(prompt string, client *openai.Client) (string, error) {
+	if client == nil {
 		return "", errors.New("OpenAI client is not initialized")
 	}
 
-	chatCompletion, err := openaiClient.Chat.Completions.New(
+	chatCompletion, err := client.Chat.Completions.New(
 		context.Background(),
 		openai.ChatCompletionNewParams{
 			Model: openai.ChatModelGPT4,

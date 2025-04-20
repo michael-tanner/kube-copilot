@@ -7,6 +7,7 @@ import (
 // Service represents your core API service
 type Service struct {
 	OpenAIClient *openai.Client
+	OpenaiApiKey string
 }
 
 type Status struct {

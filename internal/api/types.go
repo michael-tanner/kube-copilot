@@ -6,11 +6,17 @@ import (
 
 // Service represents your core API service
 type Service struct {
-	OpenAIClient *openai.Client
-	OpenaiApiKey string
+	OpenAIClient  *openai.Client
+	OpenaiApiKey  string
+	CurrentThread *Thread
 }
 
-type Status struct {
+// Thread represents an OpenAI assistant thread
+type Thread struct {
+	ID string
+}
+
+type CliStatus struct {
 	OpenaiApiKeyIsSet bool
 	KubeClusterName   string
 	KubeNamespaces    []string
@@ -20,4 +26,5 @@ type Status struct {
 type PromptResponse struct {
 	InputPrompt string
 	AIResponse  string
+	Content     string
 }

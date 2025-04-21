@@ -21,11 +21,12 @@ var kCmd = &cobra.Command{
 		}
 		service := api.NewService()
 		resp, err := service.KubectlProxy(args)
-		for _, line := range resp {
-			cmd.Println(line)
-		}
 		if err != nil {
 			cmd.Println("kubectl error:", err)
+			return
+		}
+		for _, line := range resp {
+			cmd.Println(line)
 		}
 	},
 }

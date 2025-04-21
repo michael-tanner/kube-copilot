@@ -1,7 +1,7 @@
 package api
 
 import (
-	openai "github.com/openai/openai-go"
+	openai "github.com/sashabaranov/go-openai"
 )
 
 // Service represents your core API service

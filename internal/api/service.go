@@ -8,8 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	openai "github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
+	openai "github.com/sashabaranov/go-openai"
 	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -32,12 +31,12 @@ func NewService() *Service {
 	if openaiApiKey == "" {
 		openaiApiKey = os.Getenv("OPENAI_API_KEY")
 	}
-	var openaiClient openai.Client
+	var openaiClient *openai.Client
 	if openaiApiKey != "" {
-		openaiClient = openai.NewClient(option.WithAPIKey(openaiApiKey))
+		openaiClient = openai.NewClient(openaiApiKey)
 	}
 	return &Service{
-		OpenAIClient: &openaiClient,
+		OpenAIClient: openaiClient,
 		OpenaiApiKey: openaiApiKey,
 	}
 }

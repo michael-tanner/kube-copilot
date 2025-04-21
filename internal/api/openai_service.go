@@ -7,7 +7,6 @@ import (
 	openai "github.com/openai/openai-go"
 )
 
-// SendOpenAIPrompt sends a prompt to OpenAI's ChatGPT-4 and returns the response.
 func SendOpenAIPrompt(prompt string, client *openai.Client) (string, error) {
 	if client == nil {
 		return "", errors.New("OpenAI client is not initialized")

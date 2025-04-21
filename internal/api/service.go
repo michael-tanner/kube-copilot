@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"os/exec"
 	"sort"
 	"strings"
 
@@ -79,8 +80,8 @@ func (s *Service) CheckStatus() (*Status, error) {
 	return status, nil
 }
 
-// GetKubeNamespaces returns a list of namespaces in the current Kubernetes cluster.
-func (s *Service) GetKubeNamespaces() ([]string, error) {
+// getKubeClientset returns a Kubernetes clientset using in-cluster or kubeconfig.
+func getKubeClientset() (*kubernetes.Clientset, error) {
 	var config *rest.Config
 	var err error
 
@@ -102,6 +103,15 @@ func (s *Service) GetKubeNamespaces() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	return clientset, nil
+}
+
+// GetKubeNamespaces returns a list of namespaces in the current Kubernetes cluster.
+func (s *Service) GetKubeNamespaces() ([]string, error) {
+	clientset, err := getKubeClientset()
+	if err != nil {
+		return nil, err
+	}
 
 	namespaces, err := clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
@@ -113,6 +123,29 @@ func (s *Service) GetKubeNamespaces() ([]string, error) {
 		nsNames = append(nsNames, ns.Name)
 	}
 	return nsNames, nil
+}
+
+// KubectlProxy executes a kubectl-like command using the Go client.
+// Supported: get pods, get services, get deployments, get nodes, get namespaces
+func (s *Service) KubectlProxy(args []string) ([]string, error) {
+	if len(args) < 1 {
+		return nil, errors.New("no kubectl command provided")
+	}
+
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig == "" {
+		kubeconfig = clientcmd.RecommendedHomeFile
+	}
+
+	cmdArgs := append([]string{}, args...)
+	cmd := exec.Command("kubectl", cmdArgs...)
+	cmd.Env = append(os.Environ(), "KUBECONFIG="+kubeconfig)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return []string{string(output)}, err
+	}
+	lines := strings.Split(strings.TrimRight(string(output), "\n"), "\n")
+	return lines, nil
 }
 
 func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {

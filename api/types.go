@@ -6,14 +6,17 @@ import (
 
 // Service represents your core API service
 type Service struct {
-	OpenAIClient  *openai.Client
-	OpenaiApiKey  string
-	CurrentThread *Thread
+	ServiceContext *ServiceContext
 }
 
-// Thread represents an OpenAI assistant thread
-type Thread struct {
-	ID string
+type ServiceContext struct {
+	OpenaiModel  string
+	OpenaiApiKey string
+	OpenAIClient *openai.Client
+	AssistantId  string
+	ThreadId     string
+	Namespace    string
+	KubeConfig   string
 }
 
 type CliStatus struct {

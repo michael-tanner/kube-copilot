@@ -29,24 +29,44 @@ func init() {
 
 // NewService creates a new API service instance
 func NewService() *Service {
-	// Only retrieve the API key here
-	openaiApiKey := viper.GetString("OPENAI_API_KEY")
-	if openaiApiKey == "" {
-		openaiApiKey = os.Getenv("OPENAI_API_KEY")
+	rtn := &Service{
+		ServiceContext: &ServiceContext{
+			OpenaiModel:  getValueOrDefault("OPENAI_MODEL", openai.GPT4, true),
+			OpenaiApiKey: getValueOrDefault("OPENAI_API_KEY", ""),
+			OpenAIClient: nil,
+			AssistantId:  getValueOrDefault("ASSISTANT_ID", "auto", true),
+			ThreadId:     getValueOrDefault("THREAD_ID", "", true),
+			Namespace:    getValueOrDefault("NAMESPACE", "default", true),
+			KubeConfig:   getValueOrDefault("KUBECONFIG", clientcmd.RecommendedHomeFile),
+		},
 	}
-	var openaiClient *openai.Client
-	if openaiApiKey != "" {
-		openaiClient = openai.NewClient(openaiApiKey)
+	if rtn.ServiceContext.OpenaiApiKey != "" {
+		rtn.ServiceContext.OpenAIClient = openai.NewClient(rtn.ServiceContext.OpenaiApiKey)
 	}
-	return &Service{
-		OpenAIClient: openaiClient,
-		OpenaiApiKey: openaiApiKey,
+	return rtn
+}
+
+func getValueOrDefault(key string, defaultValue string, setIfNotSet ...bool) string {
+	value := viper.GetString(key)
+	if value == "" {
+		value = os.Getenv(key)
 	}
+	if value == "" {
+		value = defaultValue
+		if len(setIfNotSet) > 0 && setIfNotSet[0] && defaultValue != "" {
+			viper.Set(key, defaultValue)
+			err := viper.WriteConfig()
+			if err != nil {
+				fmt.Printf("Error writing config: %v\n", err)
+			}
+		}
+	}
+	return value
 }
 
 // CheckStatus reads config/context and returns status info
 func (s *Service) CheckStatus() (*CliStatus, error) {
-	namespace := viper.GetString("namespace")
+	namespace := s.ServiceContext.Namespace
 
 	// Get namespaces and sort them
 	nsList, err := s.GetKubeNamespaces()
@@ -58,13 +78,8 @@ func (s *Service) CheckStatus() (*CliStatus, error) {
 		sort.Strings(nsList)
 	}
 
-	// Get current cluster name from kubeconfig (if available)
 	clusterName := ""
-	kubeconfig := os.Getenv("KUBECONFIG")
-	if kubeconfig == "" {
-		kubeconfig = clientcmd.RecommendedHomeFile
-	}
-	config, err := clientcmd.LoadFromFile(kubeconfig)
+	config, err := clientcmd.LoadFromFile(s.ServiceContext.KubeConfig)
 	if err == nil && config != nil && config.CurrentContext != "" {
 		ctx := config.Contexts[config.CurrentContext]
 		if ctx != nil {
@@ -73,7 +88,7 @@ func (s *Service) CheckStatus() (*CliStatus, error) {
 	}
 
 	status := &CliStatus{
-		OpenaiApiKeyIsSet: s.OpenaiApiKey != "",
+		OpenaiApiKeyIsSet: s.ServiceContext.OpenaiApiKey != "",
 		KubeClusterName:   clusterName,
 		KubeNamespaces:    nsList,
 		CurrentNamespace:  namespace,
@@ -82,20 +97,15 @@ func (s *Service) CheckStatus() (*CliStatus, error) {
 	return status, nil
 }
 
-// getKubeClientset returns a Kubernetes clientset using in-cluster or kubeconfig.
-func getKubeClientset() (*kubernetes.Clientset, error) {
+// getKubeClientset returns a Kubernetes clientset.
+func (s *Service) getKubeClientset() (*kubernetes.Clientset, error) {
 	var config *rest.Config
 	var err error
 
 	// Try in-cluster config first
 	config, err = rest.InClusterConfig()
 	if err != nil {
-		// Fallback to kubeconfig file
-		kubeconfig := os.Getenv("KUBECONFIG")
-		if kubeconfig == "" {
-			kubeconfig = clientcmd.RecommendedHomeFile
-		}
-		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		config, err = clientcmd.BuildConfigFromFlags("", s.ServiceContext.KubeConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +120,7 @@ func getKubeClientset() (*kubernetes.Clientset, error) {
 
 // GetKubeNamespaces returns a list of namespaces in the current Kubernetes cluster.
 func (s *Service) GetKubeNamespaces() ([]string, error) {
-	clientset, err := getKubeClientset()
+	clientset, err := s.getKubeClientset()
 	if err != nil {
 		return nil, err
 	}
@@ -134,14 +144,9 @@ func (s *Service) KubectlProxy(args []string) ([]string, error) {
 		return nil, errors.New("no kubectl command provided")
 	}
 
-	kubeconfig := os.Getenv("KUBECONFIG")
-	if kubeconfig == "" {
-		kubeconfig = clientcmd.RecommendedHomeFile
-	}
-
 	cmdArgs := append([]string{}, args...)
 	cmd := exec.Command("kubectl", cmdArgs...)
-	cmd.Env = append(os.Environ(), "KUBECONFIG="+kubeconfig)
+	cmd.Env = append(os.Environ(), "KUBECONFIG="+s.ServiceContext.KubeConfig)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return []string{string(output)}, err
@@ -152,9 +157,9 @@ func (s *Service) KubectlProxy(args []string) ([]string, error) {
 
 // CreateOrGetAssistant ensures an OpenAI assistant exists for this application
 func (s *Service) CreateOrGetAssistant() (string, error) {
-	assistantID := viper.GetString("assistant_id")
-	if assistantID != "" && assistantID != "auto" {
-		return assistantID, nil
+	rtn := s.ServiceContext.AssistantId
+	if rtn != "" && rtn != "auto" {
+		return rtn, nil
 	}
 	return s.CreateNewAssistant()
 }
@@ -191,7 +196,7 @@ func (s *Service) CreateNewAssistant() (string, error) {
 	assistantRequest := openai.AssistantRequest{
 		Name:         &name,
 		Description:  &description,
-		Model:        openai.GPT4,
+		Model:        s.ServiceContext.OpenaiModel,
 		Instructions: &instructions,
 		Tools: []openai.AssistantTool{
 			{
@@ -206,7 +211,8 @@ func (s *Service) CreateNewAssistant() (string, error) {
 		return "", fmt.Errorf("failed to create assistant: %w", err)
 	}
 
-	viper.Set("assistant_id", assistant.ID)
+	s.ServiceContext.AssistantId = assistant.ID
+	viper.Set("ASSISTANT_ID", assistant.ID)
 	err = viper.WriteConfig()
 	if err != nil {
 		// log warning but continue
@@ -218,7 +224,7 @@ func (s *Service) CreateNewAssistant() (string, error) {
 
 // getOpenAIClient returns an initialized OpenAI client
 func (s *Service) getOpenAIClient() *openai.Client {
-	apiKey := viper.GetString("openai_api_key")
+	apiKey := s.ServiceContext.OpenaiApiKey
 	if apiKey == "" {
 		return nil
 	}
@@ -227,7 +233,7 @@ func (s *Service) getOpenAIClient() *openai.Client {
 
 // SendPrompt sends a prompt to OpenAI and returns the response, handling kubectl_proxy tool calls
 func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
-	apiKey := viper.GetString("openai_api_key")
+	apiKey := s.ServiceContext.OpenaiApiKey
 	if apiKey == "" {
 		return nil, errors.New("OpenAI API key not set. Please configure with the 'config openai' command")
 	}
@@ -238,20 +244,21 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 		return nil, fmt.Errorf("failed to get assistant: %w", err)
 	}
 
-	threadID := viper.GetString("current_thread_id")
-	if threadID == "" {
+	threadId := s.ServiceContext.ThreadId
+	if threadId == "" {
 		threadObj, err := client.CreateThread(context.Background(), openai.ThreadRequest{})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create thread: %w", err)
 		}
-		threadID = threadObj.ID
-		err = UpdateCurrentThreadID(threadID)
+		threadId = threadObj.ID
+		s.ServiceContext.ThreadId = threadId
+		err = s.UpdateCurrentThreadID(threadId)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update thread ID: %w", err)
 		}
 	}
 
-	_, err = client.CreateMessage(context.Background(), threadID, openai.MessageRequest{
+	_, err = client.CreateMessage(context.Background(), threadId, openai.MessageRequest{
 		Role:    string(openai.ThreadMessageRoleUser),
 		Content: prompt,
 	})
@@ -262,13 +269,13 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 	runRequest := openai.RunRequest{
 		AssistantID: assistantID,
 	}
-	run, err := client.CreateRun(context.Background(), threadID, runRequest)
+	run, err := client.CreateRun(context.Background(), threadId, runRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create run: %w", err)
 	}
 
 	for run.Status != openai.RunStatusCompleted {
-		run, err = client.RetrieveRun(context.Background(), threadID, run.ID)
+		run, err = client.RetrieveRun(context.Background(), threadId, run.ID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve run: %w", err)
 		}
@@ -308,7 +315,7 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 			}
 			run, err = client.SubmitToolOutputs(
 				context.Background(),
-				threadID,
+				threadId,
 				run.ID,
 				openai.SubmitToolOutputsRequest{
 					ToolOutputs: toolOutputs,
@@ -327,7 +334,7 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 
 	limit := 1
 	order := "desc"
-	messages, err := client.ListMessage(context.Background(), threadID, &limit, &order, nil, nil, nil)
+	messages, err := client.ListMessage(context.Background(), threadId, &limit, &order, nil, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list messages: %w", err)
 	}
@@ -342,12 +349,9 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 	return nil, errors.New("no response received from assistant")
 }
 
-func UpdateCurrentThreadID(threadID string) error {
-	if threadID == "" {
-		viper.Set("current_thread_id", "") // Clear the current_thread_id
-	} else {
-		viper.Set("current_thread_id", threadID)
-	}
+func (s *Service) UpdateCurrentThreadID(threadId string) error {
+	viper.Set("thread_id", threadId)
+	s.ServiceContext.ThreadId = threadId
 
 	// Write the updated config back to the file
 	if err := viper.WriteConfig(); err != nil {

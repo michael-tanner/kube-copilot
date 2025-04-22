@@ -25,7 +25,7 @@ func TestStatusCommand_KeyAndNamespaceSet(t *testing.T) {
 
 	outStr := output.String()
 	assert.Contains(t, outStr, "OPENAI_API_KEY: set")
-	assert.Contains(t, outStr, "namespace: test-ns")
+	assert.Contains(t, outStr, "Current Namespace: test-ns")
 }
 
 func TestStatusCommand_KeyUnset(t *testing.T) {
@@ -44,7 +44,7 @@ func TestStatusCommand_KeyUnset(t *testing.T) {
 
 	outStr := output.String()
 	assert.Contains(t, outStr, "OPENAI_API_KEY: not set")
-	assert.Contains(t, outStr, "namespace: default")
+	assert.Contains(t, outStr, "Current Namespace: default")
 }
 
 func TestStatusCommand_NamespaceUnset(t *testing.T) {
@@ -63,5 +63,5 @@ func TestStatusCommand_NamespaceUnset(t *testing.T) {
 
 	outStr := output.String()
 	assert.Contains(t, outStr, "OPENAI_API_KEY: set")
-	assert.Contains(t, outStr, "namespace: ")
+	assert.Contains(t, outStr, "Current Namespace: ")
 }

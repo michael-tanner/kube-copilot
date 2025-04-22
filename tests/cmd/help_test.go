@@ -21,6 +21,6 @@ func TestHelpCommand(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify the output
-	expectedOutput := "Welcome to kube-copilot 😎"
+	expectedOutput := "kube-copilot: AI client for Kubernetes"
 	assert.True(t, strings.Contains(output.String(), expectedOutput), "Help command output should contain expected text")
 }

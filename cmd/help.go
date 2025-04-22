@@ -20,6 +20,9 @@ Available commands:
   set         - Set configuration parameters (e.g., namespace, OpenAI key)
   status      - Show the current kube-copilot context status
   ns          - List all namespaces in the current Kubernetes cluster (aliases: namespace, namespaces)
+  new         - Start a new AI chat thread (reset conversation context)
+  k           - Run kubectl-like commands (e.g., get pods, get services)
+  prompt      - Send a prompt to the AI assistant
 
 If no command is provided, plain text input will start an AI chat session.
 `,
@@ -31,6 +34,9 @@ If no command is provided, plain text input will start an AI chat session.
 		cmd.Println("  set         - Set configuration parameters (e.g., namespace, OpenAI key)")
 		cmd.Println("  status      - Show the current kube-copilot context status")
 		cmd.Println("  ns          - List all namespaces in the current Kubernetes cluster (aliases: namespace, namespaces)")
+		cmd.Println("  new         - Start a new AI chat thread (reset conversation context)")
+		cmd.Println("  k           - Run kubectl-like commands (e.g., get pods, get services)")
+		cmd.Println("  prompt      - Send a prompt to the AI assistant")
 		cmd.Println()
 		cmd.Println("If no command is provided, plain text input will start an AI chat session.")
 	},

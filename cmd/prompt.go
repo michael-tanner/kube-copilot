@@ -4,7 +4,6 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/michael-tanner/kube-copilot/api"
@@ -26,9 +25,9 @@ This is the main way to interact with the AI capabilities of kube-copilot.`,
 		}
 
 		prompt := strings.Join(args, " ")
-		fmt.Println("Prompt:", prompt)
-		fmt.Println("Sending prompt to AI chat session...")
-		fmt.Println()
+		cmd.Println("Prompt:", prompt)
+		cmd.Println("Sending prompt to AI chat session...")
+		cmd.Println()
 
 		service := api.NewService()
 		response, err := service.SendPrompt(prompt)
@@ -38,7 +37,7 @@ This is the main way to interact with the AI capabilities of kube-copilot.`,
 		}
 
 		if response != nil && response.Content != "" {
-			fmt.Println(response.Content)
+			cmd.Println(response.Content)
 		} else {
 			cmd.Println("Received empty response from AI assistant.")
 		}

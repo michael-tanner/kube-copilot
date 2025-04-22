@@ -65,7 +65,4 @@ func init() {
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	// Register subcommands here
-	// rootCmd.AddCommand(addCmd)
-	// ...add other commands as needed...
 }

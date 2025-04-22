@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/michael-tanner/kube-copilot/internal/config"
+	"github.com/michael-tanner/kube-copilot/api/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

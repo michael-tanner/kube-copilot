@@ -18,7 +18,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/michael-tanner/kube-copilot/internal/config"
+	"github.com/michael-tanner/kube-copilot/api/config"
 )
 
 func init() {

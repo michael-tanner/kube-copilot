@@ -4,7 +4,7 @@ Proxy for kubectl
 package cmd
 
 import (
-	"github.com/michael-tanner/kube-copilot/internal/api"
+	"github.com/michael-tanner/kube-copilot/api"
 	"github.com/spf13/cobra"
 )
 

@@ -28,25 +28,33 @@ func init() {
 }
 
 // NewService creates a new API service instance
-func NewService() *Service {
-	rtn := &Service{
-		ServiceContext: &ServiceContext{
-			OpenaiModel:  getValueOrDefault("OPENAI_MODEL", openai.GPT4, true),
-			OpenaiApiKey: getValueOrDefault("OPENAI_API_KEY", ""),
-			OpenAIClient: nil,
-			AssistantId:  getValueOrDefault("ASSISTANT_ID", "auto", true),
-			ThreadId:     getValueOrDefault("THREAD_ID", "", true),
-			Namespace:    getValueOrDefault("NAMESPACE", "default", true),
-			KubeConfig:   getValueOrDefault("KUBECONFIG", clientcmd.RecommendedHomeFile),
-		},
+func NewService(writers ...OutputWriter) *Service {
+	var writer OutputWriter
+	if len(writers) > 0 && writers[0] != nil {
+		writer = writers[0]
+	} else {
+		writer = &NoopOutputWriter{}
 	}
-	if rtn.ServiceContext.OpenaiApiKey != "" {
-		rtn.ServiceContext.OpenAIClient = openai.NewClient(rtn.ServiceContext.OpenaiApiKey)
+	s := &Service{
+		OutputWriter: writer,
 	}
-	return rtn
+	s.ServiceContext = &ServiceContext{
+		OpenaiModel:  s.getValueOrDefault("OPENAI_MODEL", openai.GPT4, true),
+		OpenaiApiKey: s.getValueOrDefault("OPENAI_API_KEY", ""),
+		OpenAIClient: nil,
+		AssistantId:  s.getValueOrDefault("ASSISTANT_ID", "auto", true),
+		ThreadId:     s.getValueOrDefault("THREAD_ID", "", true),
+		Namespace:    s.getValueOrDefault("NAMESPACE", "default", true),
+		KubeConfig:   s.getValueOrDefault("KUBECONFIG", clientcmd.RecommendedHomeFile),
+	}
+	if s.ServiceContext.OpenaiApiKey != "" {
+		s.ServiceContext.OpenAIClient = openai.NewClient(s.ServiceContext.OpenaiApiKey)
+	}
+	return s
 }
 
-func getValueOrDefault(key string, defaultValue string, setIfNotSet ...bool) string {
+// getValueOrDefault is now a method so it can use s.OutputWriter
+func (s *Service) getValueOrDefault(key string, defaultValue string, setIfNotSet ...bool) string {
 	value := viper.GetString(key)
 	if value == "" {
 		value = os.Getenv(key)
@@ -57,7 +65,7 @@ func getValueOrDefault(key string, defaultValue string, setIfNotSet ...bool) str
 			viper.Set(key, defaultValue)
 			err := viper.WriteConfig()
 			if err != nil {
-				fmt.Printf("Error writing config: %v\n", err)
+				s.OutputWriter.Errorf("Error writing config: %v\n", err)
 			}
 		}
 	}
@@ -216,7 +224,7 @@ func (s *Service) CreateNewAssistant() (string, error) {
 	err = viper.WriteConfig()
 	if err != nil {
 		// log warning but continue
-		fmt.Printf("Warning: Failed to save assistant ID to config: %v\n", err)
+		s.OutputWriter.Errorf("Warning: Failed to save assistant ID to config: %v\n", err)
 	}
 
 	return assistant.ID, nil
@@ -350,11 +358,25 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 			}
 		}
 		if run.Status == openai.RunStatusInProgress || run.Status == openai.RunStatusQueued {
-			fmt.Print(".")
+			// Ensure period is written immediately
+			if f, ok := s.OutputWriter.(interface{ Flush() }); ok {
+				s.OutputWriter.Print(".")
+				f.Flush()
+			} else {
+				s.OutputWriter.Print(".")
+			}
+			// Also flush stdout for non-cobra writers
+			if w, ok := s.OutputWriter.(*NoopOutputWriter); ok {
+				// do nothing
+				_ = w
+			} else {
+				// Try to flush os.Stdout if possible
+				os.Stdout.Sync()
+			}
 			time.Sleep(500 * time.Millisecond)
 		}
 	}
-	fmt.Println()
+	s.OutputWriter.Println("")
 
 	content, err := getLatestAssistantMessage(client, threadId)
 	if err != nil {

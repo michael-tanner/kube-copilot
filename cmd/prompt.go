@@ -29,7 +29,7 @@ This is the main way to interact with the AI capabilities of kube-copilot.`,
 		cmd.Println("Sending prompt to AI chat session...")
 		cmd.Println()
 
-		service := api.NewService()
+		service := api.NewService(&api.CobraOutputWriter{Cmd: cmd})
 		response, err := service.SendPrompt(prompt)
 		if err != nil {
 			cmd.Printf("Error: %v\n", err)

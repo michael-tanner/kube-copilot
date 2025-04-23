@@ -19,7 +19,7 @@ var kCmd = &cobra.Command{
 			cmd.Println("Usage: k <kubectl-subcommand> [args...]")
 			return
 		}
-		service := api.NewService()
+		service := api.NewService(&api.CobraOutputWriter{Cmd: cmd})
 		resp, err := service.KubectlProxy(args)
 		if err != nil {
 			cmd.Println("kubectl error:", err)

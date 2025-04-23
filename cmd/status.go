@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"strings"
+
 	"github.com/michael-tanner/kube-copilot/api"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +19,7 @@ var statusCmd = &cobra.Command{
 		cmd.Println("-----")
 		cmd.Println("----- Kube Copilot CLI Status")
 		cmd.Println("-----")
-		service := api.NewService()
+		service := api.NewService(&api.CobraOutputWriter{Cmd: cmd})
 		status, err := service.CheckStatus()
 		if err != nil {
 			cmd.Printf("Error checking status: %v\n", err)

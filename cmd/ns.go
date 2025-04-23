@@ -17,7 +17,7 @@ var nsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("Listing namespaces in the current Kubernetes cluster...")
 
-		service := api.NewService()
+		service := api.NewService(&api.CobraOutputWriter{Cmd: cmd})
 		namespaces, err := service.GetKubeNamespaces()
 		if err != nil {
 			cmd.Println("Failed to list namespaces:", err)

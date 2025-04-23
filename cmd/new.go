@@ -16,7 +16,7 @@ var newCmd = &cobra.Command{
 	Long: `Resets the current ai chat thread with the AI assistant,
 starting a fresh conversation without the context of previous interactions.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		service := api.NewService()
+		service := api.NewService(&api.CobraOutputWriter{Cmd: cmd})
 		err := service.UpdateCurrentThreadID("")
 		if err != nil {
 			cmd.Println("Error resetting chat ai thread:", err)

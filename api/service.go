@@ -181,7 +181,7 @@ func (s *Service) CreateNewAssistant() (string, error) {
 
 	name := "Kube Copilot Assistant"
 	description := "Kubernetes assistant to help manage and troubleshoot clusters"
-	instructions := "You are a Kubernetes expert assistant. Use the kubectl_proxy function to make calls to kubectl."
+	instructions := "You are a Kubernetes expert assistant. Use the kubectl_proxy function to make calls to kubectl. When you call kubectl_proxy, you MUST always provide a clear, human-readable description of what function or tool call you are performing in the 'description' parameter. This description will be shown to the user prefixed with 'AI Function: '."
 
 	kubectlTool := openai.FunctionDefinition{
 		Name:        "kubectl_proxy",
@@ -196,8 +196,12 @@ func (s *Service) CreateNewAssistant() (string, error) {
 						"type": "string",
 					},
 				},
+				"description": map[string]interface{}{
+					"type":        "string",
+					"description": "A description of what function/tool call is being performed.",
+				},
 			},
-			"required": []string{"args"},
+			"required": []string{"args", "description"},
 		},
 	}
 
@@ -325,7 +329,8 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 			for _, toolCall := range run.RequiredAction.SubmitToolOutputs.ToolCalls {
 				if toolCall.Function.Name == "kubectl_proxy" {
 					var args struct {
-						Args []string `json:"args"`
+						Args        []string `json:"args"`
+						Description string   `json:"description"`
 					}
 					if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &args); err != nil {
 						toolOutputs = append(toolOutputs, openai.ToolOutput{
@@ -334,6 +339,8 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 						})
 						continue
 					}
+					// Print test using output_writer
+					s.OutputWriter.Println("\nAI Function: " + args.Description)
 					out, err := s.KubectlProxy(args.Args)
 					outStr := strings.Join(out, "\n")
 					if err != nil {

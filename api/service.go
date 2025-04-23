@@ -231,7 +231,40 @@ func (s *Service) getOpenAIClient() *openai.Client {
 	return openai.NewClient(apiKey)
 }
 
-// SendPrompt sends a prompt to OpenAI and returns the response, handling kubectl_proxy tool calls
+// getLatestAssistantMessage fetches the latest assistant message text from a thread.
+func getLatestAssistantMessage(client *openai.Client, threadId string) (string, error) {
+	limit := 1
+	order := "desc"
+	messages, err := client.ListMessage(context.Background(), threadId, &limit, &order, nil, nil, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to list messages: %w", err)
+	}
+	if len(messages.Messages) > 0 && len(messages.Messages[0].Content) > 0 {
+		if messages.Messages[0].Content[0].Type == "text" {
+			return messages.Messages[0].Content[0].Text.Value, nil
+		}
+	}
+	return "", errors.New("no response received from assistant")
+}
+
+// ensureThreadID ensures a thread exists and returns its ID, updating the context if needed.
+func (s *Service) ensureThreadID(client *openai.Client) (string, error) {
+	threadId := s.ServiceContext.ThreadId
+	if threadId != "" {
+		return threadId, nil
+	}
+	threadObj, err := client.CreateThread(context.Background(), openai.ThreadRequest{})
+	if err != nil {
+		return "", fmt.Errorf("failed to create thread: %w", err)
+	}
+	threadId = threadObj.ID
+	s.ServiceContext.ThreadId = threadId
+	if err := s.UpdateCurrentThreadID(threadId); err != nil {
+		return "", fmt.Errorf("failed to update thread ID: %w", err)
+	}
+	return threadId, nil
+}
+
 func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 	apiKey := s.ServiceContext.OpenaiApiKey
 	if apiKey == "" {
@@ -244,18 +277,9 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 		return nil, fmt.Errorf("failed to get assistant: %w", err)
 	}
 
-	threadId := s.ServiceContext.ThreadId
-	if threadId == "" {
-		threadObj, err := client.CreateThread(context.Background(), openai.ThreadRequest{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create thread: %w", err)
-		}
-		threadId = threadObj.ID
-		s.ServiceContext.ThreadId = threadId
-		err = s.UpdateCurrentThreadID(threadId)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update thread ID: %w", err)
-		}
+	threadId, err := s.ensureThreadID(client)
+	if err != nil {
+		return nil, err
 	}
 
 	_, err = client.CreateMessage(context.Background(), threadId, openai.MessageRequest{
@@ -332,21 +356,14 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 	}
 	fmt.Println()
 
-	limit := 1
-	order := "desc"
-	messages, err := client.ListMessage(context.Background(), threadId, &limit, &order, nil, nil, nil)
+	content, err := getLatestAssistantMessage(client, threadId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list messages: %w", err)
+		return nil, err
 	}
-	if len(messages.Messages) > 0 && len(messages.Messages[0].Content) > 0 {
-		if messages.Messages[0].Content[0].Type == "text" {
-			return &PromptResponse{
-				InputPrompt: prompt,
-				Content:     messages.Messages[0].Content[0].Text.Value,
-			}, nil
-		}
-	}
-	return nil, errors.New("no response received from assistant")
+	return &PromptResponse{
+		InputPrompt: prompt,
+		Content:     content,
+	}, nil
 }
 
 func (s *Service) UpdateCurrentThreadID(threadId string) error {

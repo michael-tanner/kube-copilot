@@ -35,7 +35,7 @@ func (s *Service) CreateNewAssistant() (string, error) {
 
 	name := "Kube Copilot Assistant"
 	description := "Kubernetes assistant to help manage and troubleshoot clusters"
-	instructions := "You are a Kubernetes expert assistant. Use the kubectl_proxy and helm_proxy functions to make calls to kubectl or helm. When you call these functions, you MUST always provide a clear, human-readable description of what function or tool call you are performing in the 'description' parameter. If you get back [...truncated...] from a function call then you're missing important data. If there's a way to make a different function without getting truncated data, then do that. If that's not possible, then let the user know your working on truncated data."
+	instructions := "You are a Kubernetes expert assistant. Use the kubectl_proxy and helm_proxy functions to make calls to kubectl or helm. You can also use local_file_commands to interact with files in the local filesystem. When you call these functions, you MUST always provide a clear, human-readable description of what function or tool call you are performing in the 'description' parameter. If you get back [...truncated...] from a function call then you're missing important data. If there's a way to make a different function without getting truncated data, then do that. If that's not possible, then let the user know your working on truncated data."
 
 	kubectlTool := openai.FunctionDefinition{
 		Name:        "kubectl_proxy",
@@ -81,6 +81,34 @@ func (s *Service) CreateNewAssistant() (string, error) {
 		},
 	}
 
+	fileCommandsTool := openai.FunctionDefinition{
+		Name:        "local_file_commands",
+		Description: "Performs operations on local files such as listing, reading, or writing files",
+		Parameters: map[string]interface{}{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"command": map[string]interface{}{
+					"type":        "string",
+					"description": "The file operation to perform ('ls' to list files, 'read' to read content, 'write' to write content)",
+					"enum":        []string{"ls", "read", "write"},
+				},
+				"path": map[string]interface{}{
+					"type":        "string",
+					"description": "The file or directory path to operate on",
+				},
+				"content": map[string]interface{}{
+					"type":        "string",
+					"description": "The content to write when command is 'write'",
+				},
+				"description": map[string]interface{}{
+					"type":        "string",
+					"description": "A description of what file operation is being performed",
+				},
+			},
+			"required": []string{"command", "path", "description"},
+		},
+	}
+
 	assistantRequest := openai.AssistantRequest{
 		Name:         &name,
 		Description:  &description,
@@ -94,6 +122,10 @@ func (s *Service) CreateNewAssistant() (string, error) {
 			{
 				Type:     openai.AssistantToolTypeFunction,
 				Function: &helmTool,
+			},
+			{
+				Type:     openai.AssistantToolTypeFunction,
+				Function: &fileCommandsTool,
 			},
 		},
 	}

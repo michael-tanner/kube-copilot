@@ -114,7 +114,6 @@ func (s *Service) CheckStatus() (*CliStatus, error) {
 	return status, nil
 }
 
-
 func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 	cliDebug := viper.GetBool("cli_debug")
 
@@ -273,6 +272,64 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 					if err != nil {
 						outStr = fmt.Sprintf("Error: %v\nOutput:\n%s", err, outStr)
 					}
+					logPrintln(logFile, cliDebug, "[AI Function Response]:\n"+outStr)
+					logPrintf(logFile, cliDebug, "[DEBUG] Tool output length: %d\n", len(outStr))
+					toolOutputs = append(toolOutputs, openai.ToolOutput{
+						ToolCallID: toolCall.ID,
+						Output:     outStr,
+					})
+				case strings.HasPrefix(toolCall.Function.Name, "local_file_commands"):
+					var args struct {
+						Command     string `json:"command"`
+						Path        string `json:"path"`
+						Content     string `json:"content,omitempty"`
+						Description string `json:"description"`
+					}
+					logPrintf(logFile, cliDebug, "[DEBUG] ToolCall.Function.Arguments (%s): %s\n", toolCall.Function.Name, toolCall.Function.Arguments)
+					if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &args); err != nil {
+						logErrorf(logFile, cliDebug, "[DEBUG] Failed to parse tool arguments: %v\n", err)
+						toolOutputs = append(toolOutputs, openai.ToolOutput{
+							ToolCallID: toolCall.ID,
+							Output:     fmt.Sprintf("Failed to parse arguments: %v", err),
+						})
+						continue
+					}
+					logPrintf(logFile, cliDebug, "[DEBUG] Parsed tool args (%s): %+v\n", toolCall.Function.Name, args)
+					s.OutputWriter.Println("\nAI Function Call: " + args.Description)
+					logPrintln(logFile, cliDebug, "\nAI Function Call: "+args.Description)
+
+					var outStr string
+					var err error
+
+					switch args.Command {
+					case "ls":
+						var files []string
+						files, err = s.listFiles(args.Path)
+						outStr = "Files in " + args.Path + ":\n"
+						if len(files) == 0 {
+							outStr += "No files found."
+						} else {
+							outStr += strings.Join(files, "\n")
+						}
+					case "read":
+						outStr, err = s.readFile(args.Path)
+						if outStr == "" {
+							outStr = "File is empty."
+						}
+					case "write":
+						err = s.writeFile(args.Path, args.Content)
+						if err == nil {
+							outStr = "Successfully wrote to " + args.Path
+						}
+					default:
+						outStr = fmt.Sprintf("Unknown command: %s", args.Command)
+						err = fmt.Errorf("unknown command: %s", args.Command)
+					}
+
+					if err != nil {
+						outStr = fmt.Sprintf("Error: %v", err)
+					}
+
 					logPrintln(logFile, cliDebug, "[AI Function Response]:\n"+outStr)
 					logPrintf(logFile, cliDebug, "[DEBUG] Tool output length: %d\n", len(outStr))
 					toolOutputs = append(toolOutputs, openai.ToolOutput{

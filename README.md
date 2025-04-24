@@ -25,7 +25,7 @@ AI client for Kubernetes
    ./kc "Get a list of namespaces and then for each namespace show a list of running pods. Return this in outline format"
    ```
 
-  Example response:
+4. **Example response:**
    ```sh
    Prompt: Get a list of namespaces and then for each namespace show a list of running pods. Return this in outline format
    Sending prompt to AI chat session...
@@ -67,7 +67,7 @@ AI client for Kubernetes
    ```
 
 
-4. **Requirements:**
+5. **Requirements:**
    - Access to a Kubernetes cluster (e.g., Minikube or k3d)
    - Kube Copilot currently works best when run from within devcontainer of this repo
 

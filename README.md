@@ -26,7 +26,7 @@ AI client for Kubernetes
    ```
 
 4. **Example response:**
-   ```sh
+   ```
    Prompt: Get a list of namespaces and then for each namespace show a list of running pods. Return this in outline format
    Sending prompt to AI chat session...
 

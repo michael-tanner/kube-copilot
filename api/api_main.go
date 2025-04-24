@@ -48,7 +48,7 @@ func NewService(writers ...OutputWriter) *Service {
 		OutputWriter: writer,
 	}
 	s.ServiceContext = &ServiceContext{
-		OpenaiModel:  s.getValueOrDefault("OPENAI_MODEL", openai.GPT4, true),
+		OpenaiModel:  s.getValueOrDefault("OPENAI_MODEL", "gpt-4.1-mini", true),
 		OpenaiApiKey: s.getValueOrDefault("OPENAI_API_KEY", ""),
 		OpenAIClient: nil,
 		AssistantId:  s.getValueOrDefault("ASSISTANT_ID", "auto", true),
@@ -227,7 +227,7 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 					out, err := s.KubectlProxy(args.Args)
 					outStr := strings.Join(out, "\n")
 					outStr = sanitizeOutput(outStr)
-					const maxOutputLen = 4000
+					const maxOutputLen = 72000 // ToDo: make this configurable
 					if len(outStr) > maxOutputLen {
 						outStr = outStr[:maxOutputLen] + "\n[...truncated...]"
 					}
@@ -263,7 +263,7 @@ func (s *Service) SendPrompt(prompt string) (*PromptResponse, error) {
 					out, err := s.HelmProxy(args.Args)
 					outStr := strings.Join(out, "\n")
 					outStr = sanitizeOutput(outStr)
-					const maxOutputLen = 4000
+					const maxOutputLen = 72000 // ToDo: make this configurable
 					if len(outStr) > maxOutputLen {
 						outStr = outStr[:maxOutputLen] + "\n[...truncated...]"
 					}

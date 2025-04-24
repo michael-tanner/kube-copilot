@@ -35,7 +35,7 @@ func (s *Service) CreateNewAssistant() (string, error) {
 
 	name := "Kube Copilot Assistant"
 	description := "Kubernetes assistant to help manage and troubleshoot clusters"
-	instructions := "You are a Kubernetes expert assistant. Use the kubectl_proxy and helm_proxy functions to make calls to kubectl or helm. When you call these functions, you MUST always provide a clear, human-readable description of what function or tool call you are performing in the 'description' parameter. This description will be shown to the user prefixed with 'AI Function: '."
+	instructions := "You are a Kubernetes expert assistant. Use the kubectl_proxy and helm_proxy functions to make calls to kubectl or helm. When you call these functions, you MUST always provide a clear, human-readable description of what function or tool call you are performing in the 'description' parameter. If you get back [...truncated...] from a function call then you're missing important data. If there's a way to make a different function without getting truncated data, then do that. If that's not possible, then let the user know your working on truncated data."
 
 	kubectlTool := openai.FunctionDefinition{
 		Name:        "kubectl_proxy",

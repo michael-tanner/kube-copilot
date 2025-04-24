@@ -26,8 +26,8 @@ AI client for Kubernetes
    ```
 
 4. **Requirements:**
-   - Go 1.20+
    - Access to a Kubernetes cluster (e.g., Minikube or k3d)
+   - Kube Copilot currently works best when run from within devcontainer of this repo
 
 ## Development
 
